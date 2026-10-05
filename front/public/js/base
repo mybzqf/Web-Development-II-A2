@@ -1,0 +1,77 @@
+const API_ROOT = 'http://localhost:3010';
+
+function money(value) {
+  const n = Number(value);
+  if (!n) return 'No charge';
+  return `A$${n.toFixed(2)}`;
+}
+
+function whenText(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function dayOnly(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'short'
+  });
+}
+
+function loadJson(path) {
+  return fetch(`${API_ROOT}${path}`).then((res) => {
+    if (!res.ok) {
+      return res.json().then((body) => {
+        const err = new Error(body.error || 'Request failed.');
+        err.status = res.status;
+        throw err;
+      });
+    }
+    return res.json();
+  });
+}
+
+function showNote(el, text, isError) {
+  el.hidden = !text;
+  el.className = isError ? 'error' : 'note';
+  el.textContent = text || '';
+}
+
+function pad(n) {
+  return String(n).padStart(2, '0');
+}
+
+function drawLine(event, index) {
+  const a = document.createElement('a');
+  a.className = 'line';
+  a.href = `show.html?id=${event.id}`;
+  a.innerHTML = `
+    <span class="num">${pad(index + 1)}</span>
+    <span>
+      <h3 class="title">${event.name}</h3>
+      <p class="meta">${event.category_name} · ${event.location} · ${money(event.ticket_price)}</p>
+    </span>
+    <span class="when">${dayOnly(event.event_date)}</span>
+  `;
+  return a;
+}
+
+function markNav() {
+  const file = location.pathname.split('/').pop() || 'home.html';
+  document.querySelectorAll('nav a').forEach((link) => {
+    const href = link.getAttribute('href');
+    if (href === file || (file === '' && href === 'home.html')) {
+      link.setAttribute('aria-current', 'page');
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', markNav);
