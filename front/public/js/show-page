@@ -1,0 +1,58 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const note = document.getElementById('note');
+  const detail = document.getElementById('detail');
+  const dialog = document.getElementById('notice');
+  const closeBtn = document.getElementById('close-notice');
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    showNote(note, 'This page needs an event id in the address.', true);
+    return;
+  }
+
+  loadJson(`/public/meets/${id}`)
+    .then((event) => {
+      showNote(note, '');
+      const raised = Number(event.current_amount);
+      const goal = Number(event.goal_amount);
+      const pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+
+      detail.hidden = false;
+      detail.innerHTML = `
+        <p class="kicker">${event.category_name} · ${event.location}</p>
+        <h2>${event.name}</h2>
+        <p>${event.full_description}</p>
+        <div class="facts">
+          <div><span>When</span><span>${whenText(event.event_date)}</span></div>
+          <div><span>Ticket</span><span>${money(event.ticket_price)}</span></div>
+          <div><span>Purpose</span><span>${event.purpose}</span></div>
+          <div><span>Raised</span><span>A$${raised.toFixed(2)} of A$${goal.toFixed(2)} (${pct}%)</span></div>
+        </div>
+        <div class="progress" aria-hidden="true"><span style="width:${pct}%"></span></div>
+        <p>${event.organisation_name}<br>${event.address}<br>${event.contact_email} · ${event.contact_phone}</p>
+        <form id="register-form" novalidate>
+          <label>Name<input type="text" name="name"></label>
+          <label>Email<input type="email" name="email"></label>
+          <label>Tickets<input type="number" name="tickets" min="1"></label>
+          <button type="submit">Register</button>
+        </form>
+      `;
+
+      document.getElementById('register-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        dialog.showModal();
+      });
+    })
+    .catch((err) => {
+      if (err.status === 404) {
+        showNote(note, 'That event is not available.', true);
+        return;
+      }
+      showNote(note, 'The event could not be loaded.', true);
+    });
+
+  closeBtn.addEventListener('click', () => {
+    dialog.close();
+  });
+});
