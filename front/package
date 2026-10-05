@@ -1,0 +1,12 @@
+{
+  "name": "saltmarsh-front",
+  "version": "1.0.0",
+  "description": "Newspaper-style public site for Saltmarsh Community Chest",
+  "main": "host.js",
+  "scripts": {
+    "start": "node host.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
