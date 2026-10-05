@@ -1,0 +1,20 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const edition = document.getElementById('edition');
+  const note = document.getElementById('note');
+
+  loadJson('/public/meets')
+    .then((rows) => {
+      edition.replaceChildren();
+      if (!rows.length) {
+        showNote(note, 'No upcoming nights are listed.');
+        return;
+      }
+      showNote(note, '');
+      rows.forEach((row, i) => {
+        edition.appendChild(drawLine(row, i));
+      });
+    })
+    .catch(() => {
+      showNote(note, 'The edition could not be loaded. Check that the API is running.', true);
+    });
+});
