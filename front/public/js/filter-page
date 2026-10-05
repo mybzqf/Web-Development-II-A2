@@ -1,0 +1,61 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('filter-form');
+  const edition = document.getElementById('edition');
+  const note = document.getElementById('note');
+  const kindSelect = document.getElementById('category');
+
+  function queryString() {
+    const data = new FormData(form);
+    const q = new URLSearchParams();
+    ['date', 'location', 'category'].forEach((key) => {
+      const value = String(data.get(key) || '').trim();
+      if (value) q.set(key, value);
+    });
+    return q.toString();
+  }
+
+  function runSearch() {
+    const qs = queryString();
+    const path = qs ? `/public/meets/query?${qs}` : '/public/meets/query';
+
+    loadJson(path)
+      .then((rows) => {
+        edition.replaceChildren();
+        if (!rows.length) {
+          showNote(note, 'No events match those filters.');
+          return;
+        }
+        showNote(note, '');
+        rows.forEach((row, i) => {
+          edition.appendChild(drawLine(row, i));
+        });
+      })
+      .catch(() => {
+        showNote(note, 'The filter request failed. Check that the API is running.', true);
+      });
+  }
+
+  loadJson('/kinds')
+    .then((kinds) => {
+      kinds.forEach((kind) => {
+        const opt = document.createElement('option');
+        opt.value = kind.name;
+        opt.textContent = kind.name;
+        kindSelect.appendChild(opt);
+      });
+    })
+    .catch(() => {
+      showNote(note, 'Categories could not be loaded.', true);
+    });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch();
+  });
+
+  form.addEventListener('reset', () => {
+    setTimeout(runSearch, 0);
+  });
+
+  runSearch();
+});
